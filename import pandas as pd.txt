@@ -1,0 +1,36 @@
+import pandas as pd
+import re
+
+# Example text (replace with actual extracted text)
+pdf_text = ["Chapter 1: Introduction", "Article 1: Basics of Python", "..."]
+
+# Initialize empty lists for each column
+categories = []
+category_names = []
+subcategories = []
+subcategory_names = []
+content = []
+
+# Parse the text and populate the lists
+for line in pdf_text:
+    if "Chapter" in line:
+        chapter_number = re.search(r"Chapter (\d+)", line).group(1)
+        categories.append(chapter_number)
+        category_names.append(line.split(":")[1].strip())
+    elif "Article" in line:
+        article_number, article_name = re.split(r":\s+", line, maxsplit=1)
+        subcategories.append(article_number)
+        subcategory_names.append(article_name.strip())
+    else:
+        content.append(line.strip())
+
+# Create DataFrame
+df = pd.DataFrame({
+    "Category": categories,
+    "Category Name": category_names,
+    "Subcategory": subcategories,
+    "Subcategory Name": subcategory_names,
+    "Content": content
+})
+
+print(df)
