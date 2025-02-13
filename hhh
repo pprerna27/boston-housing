@@ -1,1 +1,58 @@
-bbj
+import fitz  # PyMuPDF
+import pandas as pd
+import re
+
+def extract_pdf_to_dataframe(pdf_path):
+    data = []
+    current_title = None
+    current_section = None
+    current_subsection = None
+    content_buffer = ""
+
+    doc = fitz.open(pdf_path)
+
+    for page_num, page in enumerate(doc, start=1):
+        text = page.get_text("text")
+        lines = text.split("\n")
+        
+        print(f"\n--- Page {page_num} ---\n")  # Debugging print
+        for line in lines:
+            print(line)  # Check extracted text
+
+            line = line.strip()
+
+            if re.match(r"^Schedule\s+\d+", line, re.IGNORECASE):
+                current_title = line
+                print(f"Title Found: {current_title}")  # Debug
+
+            elif re.match(r"^\d+\.", line):
+                if current_section and content_buffer:
+                    data.append([current_title, current_section, current_subsection, content_buffer.strip()])
+                    content_buffer = ""
+
+                current_section = line
+                current_subsection = None
+                print(f"Section Found: {current_section}")  # Debug
+
+            elif re.match(r"^\w+", line):
+                if current_subsection and content_buffer:
+                    data.append([current_title, current_section, current_subsection, content_buffer.strip()])
+                    content_buffer = ""
+
+                current_subsection = line
+                print(f"Subsection Found: {current_subsection}")  # Debug
+
+            else:
+                if current_subsection:
+                    content_buffer += " " + line
+
+        if current_subsection and content_buffer:
+            data.append([current_title, current_section, current_subsection, content_buffer.strip()])
+
+    df = pd.DataFrame(data, columns=["Title", "Section", "Subsection", "Content"])
+    return df
+
+# Run the function and check output
+pdf_path = "your_pdf_file.pdf"  # Replace with your file path
+df = extract_pdf_to_dataframe(pdf_path)
+print(df.head())  # View extracted data
